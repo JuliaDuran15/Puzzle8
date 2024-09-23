@@ -83,14 +83,13 @@ class Puzzle8:
         """Define a comparison based on the number of moves performed."""
         return len(self.actions) < len(other.actions)  # Compare based on action length
 
-
 class PuzzleSolver:
     def __init__(self, puzzle, method, depth_limit=None):
         self.puzzle = puzzle  # Current puzzle state
         self.method = method  # Method for solving (BFS, DFS, A*)
         self.visited = set()  # Set of visited states
         if self.method == "DFS":
-            self.queue = [self.puzzle]  # Stack for DFS
+            self.queue = [(self.puzzle, 0)]  # Stack for DFS with depth tracking
         elif self.method == "BFS":
             self.queue = deque([self.puzzle])  # Queue for BFS
         elif self.method == "A*":
@@ -98,7 +97,6 @@ class PuzzleSolver:
             heapq.heappush(self.queue, (self._heuristic(self.puzzle), self.puzzle))
         self.state_count = 0  # Count of states visited
         self.depth_limit = depth_limit  # Limit for DFS depth
-
 
     def solve(self):
         if self.method == "DFS":
@@ -111,11 +109,11 @@ class PuzzleSolver:
 
     def _solve_dfs(self):
         while self.queue:
-            current_state = self.queue.pop()  # Remove the next state for DFS
+            current_state, depth = self.queue.pop()  # Remove the next state for DFS
             self.state_count += 1  # Increment state count
 
             # Check if depth exceeds the limit
-            if self.depth_limit is not None and len(current_state.actions) > self.depth_limit:
+            if self.depth_limit is not None and depth > self.depth_limit:
                 continue  # Skip states beyond the depth limit
 
             if current_state.is_solved():
@@ -124,10 +122,10 @@ class PuzzleSolver:
             for next_state in current_state.get_possible_moves():
                 if next_state not in self.visited:
                     self.visited.add(next_state)
-                    self.queue.append(next_state)  # Add the next state for DFS
+                    self.queue.append((next_state, depth + 1))  # Add the next state for DFS with depth
 
         return None, self.state_count  # Return None if no solution is found
-    
+
     def _solve_bfs(self):
         while self.queue:
             current_state = self.queue.popleft()  # Remove the next state for BFS
@@ -170,7 +168,6 @@ class PuzzleSolver:
         # Manhattan distance heuristic for A*
         return sum(abs(b % 3 - g % 3) + abs(b // 3 - g // 3)
                    for b, g in enumerate(state.get_board()) if b != 0)
-
 
 class Puzzle8GUI:
     def __init__(self, root):
@@ -267,7 +264,7 @@ class Puzzle8GUI:
         depth_limit = None
         if method == "DFS":
             # Define um limite de profundidade para DFS, caso seja necessário
-            depth_limit = 20000  # Você pode ajustar esse valor conforme necessário
+            depth_limit = 5000  # Você pode ajustar esse valor conforme necessário
 
         # Inicializa o solver com o método selecionado e o limite de profundidade (apenas para DFS)
         solver = PuzzleSolver(self.puzzle, method, depth_limit=depth_limit)
